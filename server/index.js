@@ -7,6 +7,7 @@ import { db, getConfig, setConfig, transacao } from './db.js';
 import { lerBoleto, encontrarBoletosNoTexto } from './lib/boleto.js';
 import { identificarCodigo, lerXmlNfe, consultarNfce, lerChave } from './lib/nfe.js';
 import { provedorAtual } from './lib/whatsapp.js';
+import { infoTelegram, iniciarTelegram, removerChat } from './lib/telegram.js';
 import { iniciarAgendador, enviarAvisos, montarMensagem, agoraLocal } from './alertas.js';
 
 const app = express();
@@ -270,12 +271,19 @@ app.post('/api/contas/:id/reabrir', rota((req) => {
 app.delete('/api/contas/:id', rota((req) => { db.prepare('DELETE FROM contas WHERE id = ?').run(req.params.id); }));
 
 // ---------- Configuração e avisos ----------
-app.get('/api/config', rota(() => ({
+app.get('/api/config', rota(async () => ({
   ...getConfig(),
+  telegram_codigo: undefined,
+  telegram: await infoTelegram(),
   provedor: provedorAtual(),
   log: db.prepare('SELECT * FROM avisos_log ORDER BY id DESC LIMIT 10').all(),
 })));
-app.put('/api/config', rota((req) => setConfig(req.body)));
+app.put('/api/config', rota((req) => {
+  const { whatsapp_numeros, aviso_horario, aviso_dia_anterior, aviso_atrasadas } = req.body || {};
+  const dados = { whatsapp_numeros, aviso_horario, aviso_dia_anterior, aviso_atrasadas };
+  setConfig(Object.fromEntries(Object.entries(dados).filter(([, v]) => v !== undefined)));
+}));
+app.delete('/api/telegram/chats/:id', rota((req) => removerChat(req.params.id)));
 app.get('/api/avisos/previa', rota(() => montarMensagem() || { texto: 'Nenhuma conta para avisar hoje. ✅' }));
 app.post('/api/avisos/teste', rota(() => enviarAvisos({ forcar: true })));
 
@@ -291,4 +299,5 @@ if (existsSync(dist)) {
 app.listen(PORT, () => {
   console.log(`Pão Puro rodando em http://localhost:${PORT}  (WhatsApp: ${provedorAtual()})`);
   iniciarAgendador();
+  iniciarTelegram({ mensagemDoDia: () => montarMensagem()?.texto });
 });

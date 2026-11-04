@@ -58,6 +58,15 @@ docker run -d -p 3000:3000 -v paopuro-dados:/data --env-file .env paopuro
 
 O banco fica em um único arquivo (`/data/paopuro.db`). Faça backup dessa pasta.
 
+## Configurar o aviso pelo Telegram (grátis)
+
+1. No Telegram, abra o **@BotFather**, envie `/newbot` e escolha um nome (ex.: *Pão Puro Avisos*) e um usuário terminado em `bot` (ex.: `PaoPuroAvisosBot`).
+2. O BotFather responde com um **token** (algo como `123456789:AAH...`). Coloque-o na variável `TELEGRAM_BOT_TOKEN` do servidor.
+3. No app, em **Ajustes**, toque em **Conectar meu Telegram** no celular de quem vai receber os avisos e, no Telegram, em **Iniciar**.
+4. No robô: `/contas` mostra as contas de hoje e `/sair` para de receber os avisos.
+
+Só quem usa o link do app (que tem um código secreto) consegue se cadastrar. Telegram e WhatsApp podem ser usados juntos.
+
 ## Configurar o WhatsApp
 
 Escolha um provedor em `WHATSAPP_PROVIDER` no `.env`:

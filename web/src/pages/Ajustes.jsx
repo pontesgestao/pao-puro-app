@@ -44,21 +44,61 @@ export default function Ajustes({ onSair }) {
     setEnviando(false);
   };
 
+  const tg = cfg.dados?.telegram;
+  const temDestino = !!f?.whatsapp_numeros.trim() || (tg?.chats?.length > 0);
+
+  const desconectar = async (chat) => {
+    try { await api(`/telegram/chats/${chat.id}`, { method: 'DELETE' }); cfg.recarregar(); toast(`${chat.nome} desconectado`); }
+    catch (e) { toast(e.message, 'erro'); }
+  };
+
   return (
     <div className="pagina">
-      <Cabecalho titulo="Ajustes" sub="Avisos de WhatsApp e preferências" />
+      <Cabecalho titulo="Ajustes" sub="Avisos de contas e preferências" />
       {cfg.carregando && !f && <Carregando />}
       {cfg.erro && <Erro texto={cfg.erro} onTentar={cfg.recarregar} />}
 
       {f && (
         <>
           <section className="secao">
-            <h3>Aviso de contas no WhatsApp</h3>
+            <h3>Aviso pelo Telegram (grátis)</h3>
+            <div className="cartao">
+              {!tg?.ativo && (
+                <p className="texto-suave">
+                  Desativado. Para ligar, crie um robô no Telegram com o <b>@BotFather</b> e coloque o token dele na
+                  variável <code>TELEGRAM_BOT_TOKEN</code> do servidor (veja o README).
+                </p>
+              )}
+              {tg?.ativo && tg.erro && <div className="alerta erro">{tg.erro}</div>}
+              {tg?.ativo && tg.link && (
+                <>
+                  <p className="texto-suave" style={{ marginTop: 0 }}>
+                    Toque no botão <b>no celular de quem vai receber os avisos</b>. O Telegram abre: toque em <b>Iniciar</b> e pronto.
+                  </p>
+                  <a className="btn primario grande" href={tg.link} target="_blank" rel="noreferrer">✈️ Conectar meu Telegram</a>
+                  <h4>Recebendo avisos ({tg.chats.length})</h4>
+                  {tg.chats.length === 0 && <p className="texto-suave">Ninguém conectado ainda. Depois de tocar em Iniciar no Telegram, volte aqui e atualize.</p>}
+                  <ul className="lista compacta">
+                    {tg.chats.map((c) => (
+                      <li key={c.id} className="item">
+                        <div className="item-principal"><strong>{c.nome}</strong></div>
+                        <button className="btn-link" onClick={() => desconectar(c)}>Remover</button>
+                      </li>
+                    ))}
+                  </ul>
+                  <button className="btn-link" onClick={cfg.recarregar}>🔄 Atualizar lista</button>
+                </>
+              )}
+            </div>
+          </section>
+
+          <section className="secao">
+            <h3>Horário do aviso e WhatsApp</h3>
             <div className="cartao">
               <label className="campo">
                 <span>{cfg.dados?.provedor === 'callmebot'
                   ? 'Números que recebem o aviso, cada um com sua chave do CallMeBot (um por linha)'
-                  : 'Números que recebem o aviso (um por linha, com DDD)'}</span>
+                  : 'Números de WhatsApp que recebem o aviso (um por linha, com DDD)'}{tg?.ativo && ' – opcional'}</span>
                 <textarea rows={3} value={f.whatsapp_numeros} onChange={(e) => setF({ ...f, whatsapp_numeros: e.target.value })}
                   placeholder={cfg.dados?.provedor === 'callmebot' ? '(11) 98765-4321 = 123456\n(11) 91234-5678 = 654321' : '(11) 98765-4321\n(11) 91234-5678'} inputMode="tel" />
               </label>
@@ -76,7 +116,7 @@ export default function Ajustes({ onSair }) {
               </label>
               <div className="linha-botoes">
                 <button className="btn primario" onClick={salvar}>Salvar</button>
-                <button className="btn" onClick={testar} disabled={enviando || !f.whatsapp_numeros.trim()}>{enviando ? 'Enviando…' : '📤 Enviar teste'}</button>
+                <button className="btn" onClick={testar} disabled={enviando || !temDestino}>{enviando ? 'Enviando…' : '📤 Enviar teste'}</button>
               </div>
               <p className="texto-suave">
                 Serviço de envio: <b>{NOMES_PROVEDOR[cfg.dados?.provedor] || cfg.dados?.provedor}</b>

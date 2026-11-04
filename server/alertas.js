@@ -2,6 +2,7 @@
 import cron from 'node-cron';
 import { db, getConfig, setConfig } from './db.js';
 import { enviarWhatsApp, separarChave } from './lib/whatsapp.js';
+import { telegramAtivo, listarChats, enviarTelegram } from './lib/telegram.js';
 
 export const TZ = process.env.TZ_APP || 'America/Sao_Paulo';
 
@@ -61,12 +62,13 @@ export function montarMensagem(hoje = agoraLocal().data, cfg = getConfig()) {
   };
 }
 
-/** Envia o aviso para todos os números cadastrados. */
+/** Envia o aviso para todos os números de WhatsApp e chats do Telegram cadastrados. */
 export async function enviarAvisos({ forcar = false } = {}) {
   const cfg = getConfig();
   const { data } = agoraLocal();
   const numeros = cfg.whatsapp_numeros.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
-  if (!numeros.length) return { enviado: false, motivo: 'Nenhum número de WhatsApp cadastrado.' };
+  const chats = telegramAtivo() ? listarChats() : [];
+  if (!numeros.length && !chats.length) return { enviado: false, motivo: 'Nenhum número de WhatsApp ou Telegram cadastrado.' };
 
   const msg = montarMensagem(data, cfg);
   if (!msg && !forcar) {
@@ -89,6 +91,17 @@ export async function enviarAvisos({ forcar = false } = {}) {
     } catch (e) {
       log.run(data, tel, 0, String(e.message).slice(0, 500));
       resultados.push({ telefone: tel, ok: false, erro: e.message });
+    }
+  }
+  for (const chat of chats) {
+    const rotulo = `Telegram: ${chat.nome}`;
+    try {
+      await enviarTelegram(chat.id, mensagem.texto);
+      log.run(data, rotulo, 1, null);
+      resultados.push({ telefone: rotulo, ok: true });
+    } catch (e) {
+      log.run(data, rotulo, 0, String(e.message).slice(0, 500));
+      resultados.push({ telefone: rotulo, ok: false, erro: e.message });
     }
   }
   if (!forcar) setConfig({ ultimo_aviso: data });

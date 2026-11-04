@@ -2,8 +2,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-const arquivo = resolve(process.env.DB_PATH || './data/paopuro.db');
-mkdirSync(dirname(arquivo), { recursive: true });
+const arquivo = process.env.DB_PATH === ':memory:' ? ':memory:' : resolve(process.env.DB_PATH || './data/paopuro.db');
+if (arquivo !== ':memory:') mkdirSync(dirname(arquivo), { recursive: true });
 
 export const db = new DatabaseSync(arquivo);
 db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
@@ -100,6 +100,8 @@ const PADROES = {
   aviso_dia_anterior: '0',
   aviso_atrasadas: '1',
   ultimo_aviso: '',
+  telegram_codigo: '',
+  telegram_chats: '[]',
 };
 
 export function getConfig() {

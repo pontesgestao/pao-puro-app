@@ -122,3 +122,40 @@ test('CallMeBot: monta a URL com número e chave e detecta erro', async () => {
   globalThis.fetch = original;
   delete process.env.WHATSAPP_PROVIDER;
 });
+
+test('Telegram: conecta com o código certo, ignora estranhos e envia aviso', async () => {
+  process.env.DB_PATH = ':memory:';
+  process.env.TELEGRAM_BOT_TOKEN = '123:abc';
+  const { setConfig, getConfig } = await import('../db.js');
+  const tg = await import('../lib/telegram.js');
+  const enviados = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url, opt) => {
+    const metodo = url.split('/').pop();
+    const corpo = JSON.parse(opt.body || '{}');
+    if (metodo === 'getMe') return Response.json({ ok: true, result: { username: 'PaoPuroBot' } });
+    if (metodo === 'sendMessage') { enviados.push(corpo); return Response.json({ ok: true, result: {} }); }
+    return Response.json({ ok: true, result: true });
+  };
+  const info = await tg.infoTelegram();
+  assert.match(info.link, /^https:\/\/t\.me\/PaoPuroBot\?start=[\w-]+$/);
+  const codigo = getConfig().telegram_codigo;
+
+  await tg.tratarMensagem({ text: '/start errado', chat: { id: 7, first_name: 'Intruso' } });
+  assert.equal(tg.listarChats().length, 0);
+  await tg.tratarMensagem({ text: `/start ${codigo}`, chat: { id: 42, first_name: 'Maria' } });
+  await tg.tratarMensagem({ text: `/start ${codigo}`, chat: { id: 42, first_name: 'Maria' } });
+  assert.deepEqual(tg.listarChats(), [{ id: 42, nome: 'Maria' }]);
+  await tg.tratarMensagem({ text: '/contas', chat: { id: 42 } }, { mensagemDoDia: () => 'CONTAS DE HOJE' });
+  assert.equal(enviados.at(-1).text, 'CONTAS DE HOJE');
+
+  const { enviarAvisos } = await import('../alertas.js');
+  setConfig({ whatsapp_numeros: '' });
+  const r = await enviarAvisos({ forcar: true });
+  assert.deepEqual(r.resultados, [{ telefone: 'Telegram: Maria', ok: true }]);
+  assert.equal(enviados.at(-1).chat_id, 42);
+
+  await tg.tratarMensagem({ text: '/sair', chat: { id: 42 } });
+  assert.equal(tg.listarChats().length, 0);
+  globalThis.fetch = original;
+});

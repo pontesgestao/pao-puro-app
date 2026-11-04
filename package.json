@@ -1,0 +1,21 @@
+{
+  "name": "pao-puro-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "App Pão Puro – estoque por nota fiscal e contas a pagar com aviso no WhatsApp",
+  "scripts": {
+    "build": "npm --prefix web install && npm --prefix web run build",
+    "start": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning server/index.js",
+    "dev:server": "node --env-file-if-exists=.env --watch server/index.js",
+    "test": "node --test server/test/*.test.js"
+  },
+  "engines": { "node": ">=22.13" },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "express": "^4.21.2",
+    "fast-xml-parser": "^4.5.1",
+    "node-cron": "^3.0.3",
+    "pdfjs-dist": "^4.10.38"
+  }
+}

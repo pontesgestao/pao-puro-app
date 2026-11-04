@@ -1,7 +1,7 @@
 // Aviso diário por WhatsApp das contas que vencem hoje (e, opcionalmente, amanhã e atrasadas).
 import cron from 'node-cron';
 import { db, getConfig, setConfig } from './db.js';
-import { enviarWhatsApp } from './lib/whatsapp.js';
+import { enviarWhatsApp, separarChave } from './lib/whatsapp.js';
 
 export const TZ = process.env.TZ_APP || 'America/Sao_Paulo';
 
@@ -80,9 +80,10 @@ export async function enviarAvisos({ forcar = false } = {}) {
 
   const log = db.prepare('INSERT INTO avisos_log (data, telefone, sucesso, detalhe) VALUES (?, ?, ?, ?)');
   const resultados = [];
-  for (const tel of numeros) {
+  for (const entrada of numeros) {
+    const tel = separarChave(entrada).telefone;
     try {
-      await enviarWhatsApp(tel, mensagem);
+      await enviarWhatsApp(entrada, mensagem);
       log.run(data, tel, 1, null);
       resultados.push({ telefone: tel, ok: true });
     } catch (e) {

@@ -64,10 +64,20 @@ Escolha um provedor em `WHATSAPP_PROVIDER` no `.env`:
 
 | Provedor | Quando usar | Variáveis |
 |---|---|---|
+| `callmebot` | **Grátis.** Bom para começar. Sem garantia de funcionamento; a mensagem chega de um número do CallMeBot | – (a chave de cada número é cadastrada no app) |
 | `meta` | API oficial do WhatsApp Business (mais estável, cobra por conversa) | `META_ACCESS_TOKEN`, `META_PHONE_NUMBER_ID`, `META_TEMPLATE_NAME` |
 | `zapi` | Z-API – conecta um número comum pelo QR Code | `ZAPI_INSTANCE`, `ZAPI_TOKEN`, `ZAPI_CLIENT_TOKEN` |
 | `evolution` | Evolution API auto-hospedada | `EVOLUTION_URL`, `EVOLUTION_INSTANCE`, `EVOLUTION_API_KEY` |
 | `console` | Testes – só escreve a mensagem no log | – |
+
+**CallMeBot (grátis):** cada pessoa que vai **receber** o aviso faz isto uma vez no próprio celular:
+
+1. Veja em [callmebot.com](https://www.callmebot.com/blog/free-api-whatsapp-messages/) qual é o número atual do robô e salve nos contatos.
+2. Mande para esse contato, pelo WhatsApp, a mensagem `I allow callmebot to send me messages`.
+3. O robô responde com a sua **apikey** (um número).
+4. No app, em **Ajustes**, cadastre o número com a chave: `(11) 98765-4321 = 123456` (um por linha).
+
+No servidor, basta `WHATSAPP_PROVIDER=callmebot`.
 
 **Meta:** mensagens iniciadas pela empresa exigem um *modelo* aprovado. Crie um modelo (categoria *Utilidade*), por exemplo:
 

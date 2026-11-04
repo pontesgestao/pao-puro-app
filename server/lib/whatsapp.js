@@ -2,6 +2,7 @@
 //   meta      – WhatsApp Cloud API oficial (Meta). Exige modelo (template) aprovado.
 //   zapi      – Z-API (z-api.io)
 //   evolution – Evolution API (auto-hospedada)
+//   callmebot – CallMeBot (grátis; cada número que recebe precisa da própria chave)
 //   console   – apenas imprime no log (padrão, útil para testes)
 import { soDigitos } from './boleto.js';
 
@@ -9,6 +10,15 @@ const env = (k, d = '') => process.env[k] ?? d;
 
 export function provedorAtual() {
   return env('WHATSAPP_PROVIDER', 'console').toLowerCase();
+}
+
+/**
+ * Separa "telefone = chave" (formato usado no CallMeBot, onde cada número tem a sua chave).
+ * Sem "=", a chave vem de CALLMEBOT_APIKEY.
+ */
+export function separarChave(entrada) {
+  const [tel, chave] = String(entrada).split('=').map((x) => x.trim());
+  return { telefone: tel, chave: chave || env('CALLMEBOT_APIKEY') || null };
 }
 
 /** Normaliza um telefone para o formato internacional só com dígitos (55 + DDD + número). */
@@ -36,9 +46,19 @@ async function postJson(url, body, headers = {}) {
  * @param {string} telefone
  * @param {{texto: string, params: string[]}} msg  texto livre + parâmetros do template (Meta)
  */
-export async function enviarWhatsApp(telefone, msg) {
+export async function enviarWhatsApp(entrada, msg) {
+  const { telefone, chave } = separarChave(entrada);
   const para = normalizarTelefone(telefone);
   const provedor = provedorAtual();
+
+  if (provedor === 'callmebot') {
+    if (!chave) throw new Error('Falta a chave do CallMeBot para este número (use: número = chave).');
+    const url = `https://api.callmebot.com/whatsapp.php?phone=%2B${para}&apikey=${encodeURIComponent(chave)}&text=${encodeURIComponent(msg.texto)}`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    const txt = (await resp.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!resp.ok || !/queued|sent|enviad/i.test(txt)) throw new Error(`CallMeBot: ${txt.slice(0, 200) || 'HTTP ' + resp.status}`);
+    return { ok: true };
+  }
 
   if (provedor === 'meta') {
     const url = `https://graph.facebook.com/${env('META_API_VERSION', 'v21.0')}/${env('META_PHONE_NUMBER_ID')}/messages`;

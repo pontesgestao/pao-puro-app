@@ -106,3 +106,19 @@ test('página de consulta NFC-e (layout portal)', () => {
   assert.equal(n.numero, '4321');
   assert.equal(n.dataEmissao, '2026-11-03');
 });
+
+test('CallMeBot: monta a URL com número e chave e detecta erro', async () => {
+  process.env.WHATSAPP_PROVIDER = 'callmebot';
+  const { enviarWhatsApp, separarChave } = await import('../lib/whatsapp.js');
+  assert.deepEqual(separarChave('(11) 98765-4321 = 123456'), { telefone: '(11) 98765-4321', chave: '123456' });
+  const original = globalThis.fetch;
+  let urlChamada;
+  globalThis.fetch = async (url) => { urlChamada = url; return new Response('<p>Message queued. You will receive it in a few seconds.</p>'); };
+  await enviarWhatsApp('(11) 98765-4321 = 123456', { texto: 'Olá *Pão Puro*', params: [] });
+  assert.match(urlChamada, /phone=%2B5511987654321&apikey=123456&text=Ol%C3%A1%20\*P%C3%A3o%20Puro\*/);
+  globalThis.fetch = async () => new Response('APIKey is invalid.');
+  await assert.rejects(enviarWhatsApp('11987654321 = 999', { texto: 'x', params: [] }), /APIKey is invalid/);
+  await assert.rejects(enviarWhatsApp('11987654321', { texto: 'x', params: [] }), /Falta a chave/);
+  globalThis.fetch = original;
+  delete process.env.WHATSAPP_PROVIDER;
+});

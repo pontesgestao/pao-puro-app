@@ -7,6 +7,7 @@ const NOMES_PROVEDOR = {
   meta: 'WhatsApp Cloud API (Meta)',
   zapi: 'Z-API',
   evolution: 'Evolution API',
+  callmebot: 'CallMeBot (grátis)',
   console: 'Modo teste (sem envio real)',
 };
 
@@ -55,9 +56,11 @@ export default function Ajustes({ onSair }) {
             <h3>Aviso de contas no WhatsApp</h3>
             <div className="cartao">
               <label className="campo">
-                <span>Números que recebem o aviso (um por linha, com DDD)</span>
+                <span>{cfg.dados?.provedor === 'callmebot'
+                  ? 'Números que recebem o aviso, cada um com sua chave do CallMeBot (um por linha)'
+                  : 'Números que recebem o aviso (um por linha, com DDD)'}</span>
                 <textarea rows={3} value={f.whatsapp_numeros} onChange={(e) => setF({ ...f, whatsapp_numeros: e.target.value })}
-                  placeholder={'(11) 98765-4321\n(11) 91234-5678'} inputMode="tel" />
+                  placeholder={cfg.dados?.provedor === 'callmebot' ? '(11) 98765-4321 = 123456\n(11) 91234-5678 = 654321' : '(11) 98765-4321\n(11) 91234-5678'} inputMode="tel" />
               </label>
               <label className="campo">
                 <span>Horário do aviso</span>
@@ -78,6 +81,7 @@ export default function Ajustes({ onSair }) {
               <p className="texto-suave">
                 Serviço de envio: <b>{NOMES_PROVEDOR[cfg.dados?.provedor] || cfg.dados?.provedor}</b>
                 {cfg.dados?.provedor === 'console' && ' – configure o provedor no servidor para enviar de verdade.'}
+                {cfg.dados?.provedor === 'callmebot' && <> – cada número precisa ativar o CallMeBot e pegar a sua chave (veja o passo a passo no README).</>}
               </p>
             </div>
           </section>

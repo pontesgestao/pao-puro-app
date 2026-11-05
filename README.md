@@ -1,5 +1,7 @@
 # Pão Puro – App de gestão
 
+**Endereço do app:** https://pao-puro-app-production.up.railway.app
+
 App para celular da **Pão Puro Panificadora** com:
 
 - **Entrada de estoque por nota fiscal**

@@ -1,0 +1,26 @@
+PÃO PURO – APP DE GESTÃO
+========================
+
+Link do app:
+https://pao-puro-app-production.up.railway.app
+
+
+MENSAGEM PARA ENVIAR À CLIENTE
+------------------------------
+
+Olá! 🍞 O app da Pão Puro está pronto!
+
+Link: https://pao-puro-app-production.up.railway.app
+Senha: (coloque aqui a senha)
+
+Para instalar no celular:
+• Android: abra o link no Chrome, toque nos 3 pontinhos ⋮ e em "Instalar app".
+• iPhone: abra o link no Safari, toque em "Compartilhar" e em "Adicionar à Tela de Início".
+
+Para receber os avisos dos boletos no Telegram:
+no app, vá em Ajustes → "Conectar meu Telegram" → toque em "Iniciar".
+
+No dia a dia:
+• Chegou mercadoria → "Escanear nota"
+• Chegou boleto → "Ler boleto"
+• No dia do vencimento, o aviso chega sozinho no Telegram.
